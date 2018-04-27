@@ -3,7 +3,8 @@
 	using System.Linq;
 	using System.Threading.Tasks;
 	using Microsoft.AspNetCore.Identity.MongoDB;
-	using NUnit.Framework;
+    using MongoDB.Driver;
+    using NUnit.Framework;
 
 	[TestFixture]
 	public class UserSecurityStampStoreTests : UserIntegrationTestsBase
@@ -16,7 +17,10 @@
 
 			await manager.CreateAsync(user);
 
-			var savedUser = Users.FindAll().Single();
+			var builder = Builders<IdentityUser>.Filter;
+			var filter = builder.Empty;
+
+			var savedUser = Users.FindAsync(filter).Result.Single();
 			Expect(savedUser.SecurityStamp, Is.Not.Null);
 		}
 

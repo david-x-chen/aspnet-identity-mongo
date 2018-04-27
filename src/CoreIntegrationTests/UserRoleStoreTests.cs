@@ -3,7 +3,8 @@
 	using System.Linq;
 	using System.Threading.Tasks;
 	using Microsoft.AspNetCore.Identity.MongoDB;
-	using NUnit.Framework;
+    using MongoDB.Driver;
+    using NUnit.Framework;
 
 	// todo low - validate all tests work
 	[TestFixture]
@@ -30,7 +31,10 @@
 
 			await manager.AddToRoleAsync(user, "role");
 
-			var savedUser = Users.FindAll().Single();
+			var builder = Builders<IdentityUser>.Filter;
+			var filter = builder.Empty;
+
+			var savedUser = Users.FindAsync(filter).Result.Single();
 			// note: addToRole now passes a normalized role name
 			Expect(savedUser.Roles, Is.EquivalentTo(new[] {"ROLE"}));
 			Expect(await manager.IsInRoleAsync(user, "role"), Is.True);
@@ -46,7 +50,10 @@
 
 			await manager.RemoveFromRoleAsync(user, "role");
 
-			var savedUser = Users.FindAll().Single();
+			var builder = Builders<IdentityUser>.Filter;
+			var filter = builder.Empty;
+
+			var savedUser = Users.FindAsync(filter).Result.Single();
 			Expect(savedUser.Roles, Is.Empty);
 			Expect(await manager.IsInRoleAsync(user, "role"), Is.False);
 		}

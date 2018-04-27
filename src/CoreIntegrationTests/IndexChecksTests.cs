@@ -1,9 +1,11 @@
 ﻿namespace IntegrationTests
 {
 	using System;
-	using System.Linq;
+    using System.Collections.Generic;
+    using System.Linq;
 	using Microsoft.AspNetCore.Identity.MongoDB;
-	using MongoDB.Driver;
+    using MongoDB.Bson.Serialization;
+    using MongoDB.Driver;
 	using NUnit.Framework;
 
 	[TestFixture]
@@ -29,14 +31,45 @@
 
 			addIndex(testCollection);
 
-			var legacyCollectionInterface = Database.GetCollection(testCollectionName);
-			var index = legacyCollectionInterface.GetIndexes()
-				.Where(i => i.IsUnique)
-				.Where(i => i.Key.Count() == 1)
-				.FirstOrDefault(i => i.Key.Contains(indexedField));
+			var legacyCollectionInterface = Database.GetCollection<TCollection>(testCollectionName);
+			var indexManager = legacyCollectionInterface.Indexes;
+			var indexList = indexManager.List();
+			var actualIndexList = new List<MongoDbIndex>();
+
+			while(indexList.MoveNext())
+			{
+				var currentIndex = indexList.Current;
+				foreach(var doc in currentIndex)
+				{
+					var acutalIndex = BsonSerializer.Deserialize<MongoDbIndex>(doc);
+					
+					if (currentIndex != null)
+					{
+						actualIndexList.Add(acutalIndex);
+					}
+				}
+			}
+
+			var index = actualIndexList
+				.Where(i => i.unique)
+				.Where(i => i.key.Count() == 1)
+				.FirstOrDefault(i => i.key.ContainsKey(indexedField));
 			var failureMessage = $"No unique index found on {indexedField}";
 			Expect(index, Is.Not.Null, failureMessage);
-			Expect(index.Key.Count(), Is.EqualTo(1), failureMessage);
+			Expect(index.key.Count(), Is.EqualTo(1), failureMessage);
+		}
+
+		internal class MongoDbIndex
+		{
+			public int v {get;set;}
+
+			public string name {get;set;}
+
+			public bool unique {get;set;}
+
+			public string ns {get;set;}
+
+			public Dictionary<string, int> key {get;set;}
 		}
 	}
 }

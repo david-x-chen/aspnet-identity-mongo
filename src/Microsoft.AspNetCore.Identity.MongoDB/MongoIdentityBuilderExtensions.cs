@@ -5,6 +5,8 @@ namespace Microsoft.Extensions.DependencyInjection
 	using System;
 	using AspNetCore.Identity;
 	using AspNetCore.Identity.MongoDB;
+	using IdentityServer4.AspNetIdentity;
+	using IdentityServer4.Services;
 	using MongoDB.Driver;
 
 	public static class MongoIdentityBuilderExtensions

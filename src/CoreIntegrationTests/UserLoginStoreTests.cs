@@ -4,7 +4,8 @@
 	using System.Threading.Tasks;
 	using Microsoft.AspNetCore.Identity;
 	using Microsoft.AspNetCore.Identity.MongoDB;
-	using NUnit.Framework;
+    using MongoDB.Driver;
+    using NUnit.Framework;
 
 	// todo low - validate all tests work
 	[TestFixture]
@@ -19,8 +20,11 @@
 			await manager.CreateAsync(user);
 
 			await manager.AddLoginAsync(user, login);
+			
+			var builder = Builders<IdentityUser>.Filter;
+			var filter = builder.Empty;
 
-			var savedLogin = Users.FindAll().Single().Logins.Single();
+			var savedLogin = Users.FindAsync(filter).Result.Single().Logins.Single();
 			Expect(savedLogin.LoginProvider, Is.EqualTo("provider"));
 			Expect(savedLogin.ProviderKey, Is.EqualTo("key"));
 			Expect(savedLogin.ProviderDisplayName, Is.EqualTo("name"));
@@ -37,7 +41,10 @@
 
 			await manager.RemoveLoginAsync(user, login.LoginProvider, login.ProviderKey);
 
-			var savedUser = Users.FindAll().Single();
+			var builder = Builders<IdentityUser>.Filter;
+			var filter = builder.Empty;
+
+			var savedUser = Users.FindAsync(filter).Result.Single();
 			Expect(savedUser.Logins, Is.Empty);
 		}
 

@@ -5,7 +5,8 @@
 	using Microsoft.AspNetCore.Identity;
 	using Microsoft.AspNetCore.Identity.MongoDB;
 	using Microsoft.Extensions.DependencyInjection;
-	using NUnit.Framework;
+    using MongoDB.Driver;
+    using NUnit.Framework;
 
 	[TestFixture]
 	public class EnsureWeCanExtendIdentityRoleTests : UserIntegrationTestsBase
@@ -36,7 +37,10 @@
 
 			await _Manager.CreateAsync(_Role);
 
-			var savedRole = Roles.FindAllAs<ExtendedIdentityRole>().Single();
+			var builder = Builders<IdentityRole>.Filter;
+			var filter = builder.Empty;
+
+			var savedRole = Roles.FindAsync<ExtendedIdentityRole>(filter).Result.Single();
 			Expect(savedRole.ExtendedField, Is.EqualTo("extendedField"));
 		}
 

@@ -10,9 +10,9 @@
 
 	public class UserIntegrationTestsBase : AssertionHelper
 	{
-		protected MongoDatabase Database;
-		protected MongoCollection<IdentityUser> Users;
-		protected MongoCollection<IdentityRole> Roles;
+		protected IMongoDatabase Database;
+		protected IMongoCollection<IdentityUser> Users;
+		protected IMongoCollection<IdentityRole> Roles;
 
 		// note: for now we'll have interfaces to both the new and old apis for MongoDB, that way we don't have to update all the tests at once and risk introducing bugs
 		protected IMongoDatabase DatabaseNewApi;
@@ -20,13 +20,17 @@
 		private readonly string _TestingConnectionString = $"mongodb://localhost:27017/{IdentityTesting}";
 		private const string IdentityTesting = "identity-testing";
 
-		[SetUp]
+        public UserIntegrationTestsBase()
+        {
+        }
+
+        [SetUp]
 		public void BeforeEachTest()
 		{
 			var client = new MongoClient(_TestingConnectionString);
 
 			// todo move away from GetServer which could be deprecated at some point
-			Database = client.GetServer().GetDatabase(IdentityTesting);
+			Database = client.GetDatabase(IdentityTesting);
 			Users = Database.GetCollection<IdentityUser>("users");
 			Roles = Database.GetCollection<IdentityRole>("roles");
 

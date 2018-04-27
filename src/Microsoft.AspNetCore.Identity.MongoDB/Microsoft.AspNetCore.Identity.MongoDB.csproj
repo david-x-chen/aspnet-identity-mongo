@@ -4,7 +4,7 @@
     <Description>A MongoDB provider for ASP.NET Core Identity framework.</Description>
     <VersionPrefix>1.0.2</VersionPrefix>
     <Authors>Wes Higbee</Authors>
-    <TargetFrameworks>net451;netstandard1.5</TargetFrameworks>
+    <TargetFramework>netstandard2.0</TargetFramework>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <PackageId>Microsoft.AspNetCore.Identity.MongoDB</PackageId>
     <PackageTags>aspnetcore;mongo;mongodb;identity;membership</PackageTags>
@@ -13,12 +13,13 @@
     <PackageLicenseUrl>https://github.com/g0t4/aspnet-identity-mongo/blob/master/LICENSE</PackageLicenseUrl>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/g0t4/aspnet-identity-mongo</RepositoryUrl>
-    <NetStandardImplicitPackageVersion Condition=" '$(TargetFramework)' == 'netstandard1.5' ">1.6.0</NetStandardImplicitPackageVersion>
+    <NetStandardImplicitPackageVersion Condition=" '$(TargetFramework)' == 'netstandard1.5' ">2.0.3</NetStandardImplicitPackageVersion>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Identity" Version="1.0.2" />
-    <PackageReference Include="MongoDB.Driver" Version="2.3.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity" Version="2.0.2" />
+    <PackageReference Include="IdentityServer4.AspNetIdentity" Version="2.1.0" />
+    <PackageReference Include="MongoDB.Driver" Version="2.5.1" />
   </ItemGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'net451' ">

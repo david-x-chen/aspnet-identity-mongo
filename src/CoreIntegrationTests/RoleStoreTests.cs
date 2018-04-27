@@ -4,7 +4,8 @@
 	using System.Threading.Tasks;
 	using Microsoft.AspNetCore.Identity.MongoDB;
 	using MongoDB.Bson;
-	using NUnit.Framework;
+    using MongoDB.Driver;
+    using NUnit.Framework;
 
 	[TestFixture]
 	public class RoleStoreTests : UserIntegrationTestsBase
@@ -17,8 +18,11 @@
 			var manager = GetRoleManager();
 
 			await manager.CreateAsync(role);
+			
+			var builder = Builders<IdentityRole>.Filter;
+			var filter = builder.Empty;
 
-			var savedRole = Roles.FindAll().Single();
+			var savedRole = Roles.FindAsync(filter).Result.Single();
 			Expect(savedRole.Name, Is.EqualTo(roleName));
 			Expect(savedRole.NormalizedName, Is.EqualTo("ADMIN"));
 		}
@@ -59,11 +63,14 @@
 			var role = new IdentityRole {Name = "name"};
 			var manager = GetRoleManager();
 			await manager.CreateAsync(role);
-			Expect(Roles.FindAll(), Is.Not.Empty);
+			
+			var builder = Builders<IdentityRole>.Filter;
+			var filter = builder.Empty;
+
+			Expect(Roles.FindAsync(filter).Result.ToList(), Is.Not.Empty);
 
 			await manager.DeleteAsync(role);
-
-			Expect(Roles.FindAll(), Is.Empty);
+			Expect(Roles.FindAsync(filter).Result.ToList(), Is.Empty);
 		}
 
 		[Test]
@@ -76,8 +83,11 @@
 			savedRole.Name = "newname";
 
 			await manager.UpdateAsync(savedRole);
+			
+			var builder = Builders<IdentityRole>.Filter;
+			var filter = builder.Empty;
 
-			var changedRole = Roles.FindAll().Single();
+			var changedRole = Roles.FindAsync(filter).Result.Single();
 			Expect(changedRole, Is.Not.Null);
 			Expect(changedRole.Name, Is.EqualTo("newname"));
 		}

@@ -4,20 +4,22 @@
 
 namespace Microsoft.AspNetCore.Identity.MongoDB
 {
-	using System.Linq;
-	using System.Threading;
-	using System.Threading.Tasks;
-	using global::MongoDB.Driver;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Security.Claims;
+    using System.Threading;
+    using System.Threading.Tasks;
+    using global::MongoDB.Driver;
 
-	/// <summary>
-	///     Note: Deleting and updating do not modify the roles stored on a user document. If you desire this dynamic
-	///     capability, override the appropriate operations on RoleStore as desired for your application. For example you could
-	///     perform a document modification on the users collection before a delete or a rename.
-	///     When passing a cancellation token, it will only be used if the operation requires a database interaction.
-	/// </summary>
-	/// <typeparam name="TRole">Needs to extend the provided IdentityRole type.</typeparam>
-	public class RoleStore<TRole> : IQueryableRoleStore<TRole>
-		// todo IRoleClaimStore<TRole>
+    /// <summary>
+    ///     Note: Deleting and updating do not modify the roles stored on a user document. If you desire this dynamic
+    ///     capability, override the appropriate operations on RoleStore as desired for your application. For example you could
+    ///     perform a document modification on the users collection before a delete or a rename.
+    ///     When passing a cancellation token, it will only be used if the operation requires a database interaction.
+    /// </summary>
+    /// <typeparam name="TRole">Needs to extend the provided IdentityRole type.</typeparam>
+    public class RoleStore<TRole> : IQueryableRoleStore<TRole>,
+		IRoleClaimStore<TRole>
 		where TRole : IdentityRole
 	{
 		private readonly IMongoCollection<TRole> _Roles;
@@ -76,7 +78,24 @@ namespace Microsoft.AspNetCore.Identity.MongoDB
 			=> _Roles.Find(r => r.NormalizedName == normalizedName)
 				.FirstOrDefaultAsync(token);
 
-		public virtual IQueryable<TRole> Roles
+        public virtual async Task<IList<Claim>> GetClaimsAsync(TRole role, CancellationToken cancellationToken = default(CancellationToken))
+            => role.Claims.Select(c => c.ToSecurityClaim()).ToList();
+
+        public virtual async Task AddClaimAsync(TRole role, Claim claim, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            role.AddClaim(claim);
+
+            await UpdateAsync(role, cancellationToken);
+        }
+
+        public virtual async Task RemoveClaimAsync(TRole role, Claim claim, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            role.RemoveClaim(claim);
+
+            await UpdateAsync(role, cancellationToken);
+        }
+
+        public virtual IQueryable<TRole> Roles
 			=> _Roles.AsQueryable();
 	}
 }

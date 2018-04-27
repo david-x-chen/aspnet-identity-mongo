@@ -14,7 +14,7 @@
 			var user = new IdentityUser();
 			user.Id = null;
 
-			Users.Insert(user);
+			Users.InsertOne(user);
 
 			Expect(user.Id, Is.Not.Null);
 			var parsed = user.Id.SafeParseObjectId();

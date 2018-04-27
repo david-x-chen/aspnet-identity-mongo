@@ -5,7 +5,8 @@
 	using Microsoft.AspNetCore.Identity;
 	using Microsoft.AspNetCore.Identity.MongoDB;
 	using Microsoft.Extensions.DependencyInjection;
-	using NUnit.Framework;
+    using MongoDB.Driver;
+    using NUnit.Framework;
 
 	// todo low - validate all tests work
 	[TestFixture]
@@ -55,7 +56,10 @@
 
 			await manager.RemovePasswordAsync(user);
 
-			var savedUser = Users.FindAll().Single();
+			var builder = Builders<IdentityUser>.Filter;
+			var filter = builder.Empty;
+
+			var savedUser = Users.FindAsync(filter).Result.Single();
 			Expect(savedUser.PasswordHash, Is.Null);
 		}
 	}

@@ -4,7 +4,8 @@
 	using System.Threading.Tasks;
 	using Microsoft.AspNetCore.Identity.MongoDB;
 	using MongoDB.Bson;
-	using NUnit.Framework;
+    using MongoDB.Driver;
+    using NUnit.Framework;
 
 	// todo low - validate all tests work
 	[TestFixture]
@@ -19,7 +20,10 @@
 
 			await manager.CreateAsync(user);
 
-			var savedUser = Users.FindAll().Single();
+			var builder = Builders<IdentityUser>.Filter;
+			var filter = builder.Empty;
+
+			var savedUser = Users.FindAsync(filter).Result.Single();
 			Expect(savedUser.UserName, Is.EqualTo(user.UserName));
 		}
 
@@ -88,11 +92,15 @@
 			var user = new IdentityUser {UserName = "name"};
 			var manager = GetUserManager();
 			await manager.CreateAsync(user);
-			Expect(Users.FindAll(), Is.Not.Empty);
+
+			var builder = Builders<IdentityUser>.Filter;
+			var filter = builder.Empty;
+
+			Expect(Users.FindAsync(filter).Result.ToList(), Is.Not.Empty);
 
 			await manager.DeleteAsync(user);
 
-			Expect(Users.FindAll(), Is.Empty);
+			Expect(Users.FindAsync(filter).Result.ToList(), Is.Empty);
 		}
 
 		[Test]
@@ -106,7 +114,10 @@
 
 			await manager.UpdateAsync(savedUser);
 
-			var changedUser = Users.FindAll().Single();
+			var builder = Builders<IdentityUser>.Filter;
+			var filter = builder.Empty;
+
+			var changedUser = Users.FindAsync(filter).Result.Single();
 			Expect(changedUser, Is.Not.Null);
 			Expect(changedUser.UserName, Is.EqualTo("newname"));
 		}

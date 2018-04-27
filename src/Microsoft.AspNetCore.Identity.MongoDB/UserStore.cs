@@ -26,21 +26,31 @@ namespace Microsoft.AspNetCore.Identity.MongoDB
 			IUserClaimStore<TUser>,
 			IUserPhoneNumberStore<TUser>,
 			IUserTwoFactorStore<TUser>,
+			IUserTwoFactorRecoveryCodeStore<TUser>,
 			IUserLockoutStore<TUser>,
 			IQueryableUserStore<TUser>,
+			IUserAuthenticatorKeyStore<TUser>,
 			IUserAuthenticationTokenStore<TUser>
 		where TUser : IdentityUser
 	{
 		private readonly IMongoCollection<TUser> _Users;
+		private const string InternalLoginProvider = "[AspNetUserStore]";
+        private const string AuthenticatorKeyTokenName = "AuthenticatorKey";
+		private const string RecoveryCodeTokenName = "RecoveryCodes";
 
 		public UserStore(IMongoCollection<TUser> users)
 		{
 			_Users = users;
 		}
 
-		public virtual void Dispose()
+		private bool _disposed = false;
+
+		/// <summary>
+		///     Dispose the store
+		/// </summary>
+		public void Dispose()
 		{
-			// no need to dispose of anything, mongodb handles connection pooling automatically
+			_disposed = true;
 		}
 
 		public virtual async Task<IdentityResult> CreateAsync(TUser user, CancellationToken token)
@@ -281,5 +291,71 @@ namespace Microsoft.AspNetCore.Identity.MongoDB
 
 		public virtual async Task<string> GetTokenAsync(TUser user, string loginProvider, string name, CancellationToken cancellationToken)
 			=> user.GetTokenValue(loginProvider, name);
-	}
+
+        public virtual async Task SetAuthenticatorKeyAsync(TUser user, string key, CancellationToken cancellationToken)
+        {
+            await SetTokenAsync(user, InternalLoginProvider, AuthenticatorKeyTokenName, key, cancellationToken);
+        }
+
+        public virtual async Task<string> GetAuthenticatorKeyAsync(TUser user, CancellationToken cancellationToken)
+        {
+           return await GetTokenAsync(user, InternalLoginProvider, AuthenticatorKeyTokenName, cancellationToken);
+        }
+
+        public virtual Task ReplaceCodesAsync(TUser user, IEnumerable<string> recoveryCodes, CancellationToken cancellationToken)
+        {
+            var mergedCodes = string.Join(";", recoveryCodes);
+			return SetTokenAsync(user, InternalLoginProvider, RecoveryCodeTokenName, mergedCodes, cancellationToken);
+        }
+
+        public virtual async Task<bool> RedeemCodeAsync(TUser user, string code, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+			ThrowIfDisposed();
+
+			if (user == null)
+			{
+				throw new ArgumentNullException(nameof(user));
+			}
+			if (code == null)
+			{
+				throw new ArgumentNullException(nameof(code));
+			}
+
+			var mergedCodes = await GetTokenAsync(user, InternalLoginProvider, RecoveryCodeTokenName, cancellationToken) ?? "";
+			var splitCodes = mergedCodes.Split(';');
+			if (splitCodes.Contains(code))
+			{
+				var updatedCodes = new List<string>(splitCodes.Where(s => s != code));
+				await ReplaceCodesAsync(user, updatedCodes, cancellationToken);
+				return true;
+			}
+			return false;
+        }
+
+        public virtual async Task<int> CountCodesAsync(TUser user, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+			ThrowIfDisposed();
+
+			if (user == null)
+			{
+				throw new ArgumentNullException(nameof(user));
+			}
+			var mergedCodes = await GetTokenAsync(user, InternalLoginProvider, RecoveryCodeTokenName, cancellationToken) ?? "";
+			if (mergedCodes.Length > 0)
+			{
+				return mergedCodes.Split(';').Length;
+			}
+			return 0;
+        }
+
+		private void ThrowIfDisposed()
+		{
+			if (_disposed)
+			{
+				//throw new ObjectDisposedException(GetType().Name);
+			}
+		}
+    }
 }

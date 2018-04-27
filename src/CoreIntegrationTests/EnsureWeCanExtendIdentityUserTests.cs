@@ -5,7 +5,8 @@
 	using Microsoft.AspNetCore.Identity;
 	using Microsoft.AspNetCore.Identity.MongoDB;
 	using Microsoft.Extensions.DependencyInjection;
-	using NUnit.Framework;
+    using MongoDB.Driver;
+    using NUnit.Framework;
 
 	[TestFixture]
 	public class EnsureWeCanExtendIdentityUserTests : UserIntegrationTestsBase
@@ -36,7 +37,10 @@
 
 			await _Manager.CreateAsync(_User);
 
-			var savedUser = Users.FindAllAs<ExtendedIdentityUser>().Single();
+			var builder = Builders<IdentityUser>.Filter;
+			var filter = builder.Empty;
+			
+			var savedUser = Users.FindAsync<ExtendedIdentityUser>(filter).Result.Single();
 			Expect(savedUser.ExtendedField, Is.EqualTo("extendedField"));
 		}
 
